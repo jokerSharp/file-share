@@ -1,5 +1,6 @@
 package io.project.controller;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -9,7 +10,6 @@ import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
@@ -21,22 +21,25 @@ public class TelegramBot implements SpringLongPollingBot, LongPollingSingleThrea
     private final String token;
 
     private final TelegramClient telegramClient;
+    private final UpdateController updateController;
 
-    public TelegramBot(@Value("${bot.token}") String token) {
+    public TelegramBot(@Value("${bot.token}") String token, UpdateController updateController) {
         this.token = token;
         this.telegramClient = new OkHttpTelegramClient(getBotToken());
+        this.updateController = updateController;
+    }
+
+    @PostConstruct
+    public void init() {
+        updateController.registerBot(this);
     }
 
     @Override
     public void consume(Update update) {
-        Message message = update.getMessage();
-        log.info(message.getText());
-
-        SendMessage response = SendMessage.builder().chatId(message.getChatId()).text("Hello from bot").build();
-        sendMessage(response);
+        updateController.processUpdate(update);
     }
 
-    private void sendMessage(SendMessage message) {
+    public void sendMessage(SendMessage message) {
         if (message != null) {
             try {
                 telegramClient.execute(message);
