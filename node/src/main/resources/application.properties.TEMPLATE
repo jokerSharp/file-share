@@ -4,3 +4,8 @@ spring.rabbitmq.host=localhost
 spring.rabbitmq.port=5672
 spring.rabbitmq.username=
 spring.rabbitmq.password=
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/file_share
+spring.datasource.name=
+spring.datasource.password=
+spring.jpa.generate-ddl=true
