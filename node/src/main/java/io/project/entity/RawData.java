@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Getter
 @Setter
+@EqualsAndHashCode(exclude = "id")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

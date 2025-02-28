@@ -31,18 +31,18 @@ public class UpdateController {
             log.error("Update is null");
             return;
         }
-        if (update.getMessage() != null) {
+        if (update.hasMessage()) {
             distributeMessageByType(update);
         }
     }
 
     private void distributeMessageByType(Update update) {
         Message message = update.getMessage();
-        if (message.getText() != null) {
+        if (message.hasText()) {
             processTextMessage(update);
-        } else if (message.getDocument() != null) {
+        } else if (message.hasDocument()) {
             processDocMessage(update);
-        } else if (message.getPhoto() != null) {
+        } else if (message.hasPhoto()) {
             processPhotoMessage(update);
         } else {
             setUnsupportedMessageTypeViewMessage(update);
