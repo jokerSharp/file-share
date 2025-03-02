@@ -2,10 +2,14 @@ package io.project.service.impl;
 
 import io.project.dao.AppUserDAO;
 import io.project.dao.RawDataDAO;
+import io.project.entity.AppDocument;
 import io.project.entity.AppUser;
 import io.project.entity.RawData;
 import io.project.entity.UserState;
+import io.project.exeption.UploadFileException;
+import io.project.service.FileService;
 import io.project.service.MainService;
+import io.project.service.enums.ServiceCommand;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.message.Message;
 
 import static io.project.entity.UserState.BASIC_STATE;
 import static io.project.entity.UserState.WAIT_FOR_EMAIL_STATE;
-import static io.project.service.enums.ServiceCommands.*;
+import static io.project.service.enums.ServiceCommand.*;
 
 @RequiredArgsConstructor
 @Service
@@ -27,6 +31,7 @@ public class MainServiceImpl implements MainService {
     private final RawDataDAO rawDataDAO;
     private final ProducerServiceImpl producerServiceImpl;
     private final AppUserDAO appUserDAO;
+    private final FileService fileService;
 
     @Override
     public void processTextMessage(Update update) {
@@ -36,7 +41,8 @@ public class MainServiceImpl implements MainService {
         String text = update.getMessage().getText();
         String output = "";
 
-        if (CANCEL.equals(text)) {
+        ServiceCommand serviceCommand = ServiceCommand.fromValue(text);
+        if (CANCEL.equals(serviceCommand)) {
             output = cancelProcess(appUser);
         } else if (BASIC_STATE.equals(userState)) {
             output = processServiceCommand(appUser, text);
@@ -52,7 +58,7 @@ public class MainServiceImpl implements MainService {
     }
 
     @Override
-    public void processDocMessage(Update update) {
+    public void processDocumentMessage(Update update) {
         saveRawData(update);
         AppUser appUser = findOrSaveAppUser(update);
         long chatId = update.getMessage().getChatId();
@@ -61,9 +67,16 @@ public class MainServiceImpl implements MainService {
             return;
         }
 
-        //todo implement
-        String output = "Document is successfully processed. Url for downloading: http://test.com/get-doc/123";
-        sendAnswer(output, chatId);
+        try {
+            AppDocument document = fileService.processDocument(update.getMessage());
+            //todo implement
+            String output = "Document is successfully processed. Url for downloading: http://test.com/get-doc/123";
+            sendAnswer(output, chatId);
+        } catch (UploadFileException e) {
+            log.error(e.getMessage());
+            String error = "Unfortunately, there was an error processing the document. Please try again later";
+            sendAnswer(error, chatId);
+        }
     }
 
     @Override
@@ -77,7 +90,7 @@ public class MainServiceImpl implements MainService {
         }
 
         //todo implement
-        String output = "Photo is successfully processed. Url for downloading: http://test.com/get-photo/123";
+        String output = "Photo was successfully processed. Url for downloading: http://test.com/get-photo/123";
         sendAnswer(output, chatId);
     }
 
@@ -88,7 +101,7 @@ public class MainServiceImpl implements MainService {
             sendAnswer(error, chatId);
             return true;
         } else if (!BASIC_STATE.equals(userState)) {
-            String error = "Unknown error, please input /cancel and try again";
+            String error = "Unknown error, please type /cancel and try again";
             sendAnswer(error, chatId);
             return true;
         }
