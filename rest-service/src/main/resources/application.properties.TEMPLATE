@@ -4,3 +4,5 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/file_share
 spring.datasource.name=
 spring.datasource.password=
 spring.jpa.generate-ddl=true
+
+salt=

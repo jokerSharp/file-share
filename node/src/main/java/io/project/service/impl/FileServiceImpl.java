@@ -8,8 +8,9 @@ import io.project.entity.AppPhoto;
 import io.project.entity.BinaryContent;
 import io.project.exeption.UploadFileException;
 import io.project.service.FileService;
+import io.project.service.enums.LinkType;
+import io.project.utils.CryptoUtils;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -37,10 +38,13 @@ public class FileServiceImpl implements FileService {
     private String fileInfoUri;
     @Value("${service.file_storage.uri}")
     private String fileStorageUri;
+    @Value("${link.address}")
+    private String linkAddress;
 
     private final AppDocumentDAO appDocumentDAO;
     private final AppPhotoDAO appPhotoDAO;
     private final BinaryContentDAO binaryContentDAO;
+    private final CryptoUtils cryptoUtils;
 
     @Override
     public AppDocument processDocument(Message externalMessage) {
@@ -58,8 +62,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public AppPhoto processPhoto(Message externalMessage) {
-        //todo handling only the first photo
-        PhotoSize telegramPhoto = externalMessage.getPhoto().get(0);
+        int photoCount = externalMessage.getPhoto().size();
+        int photoIndex = photoCount > 1 ? externalMessage.getPhoto().size() - 1 : 0;
+        PhotoSize telegramPhoto = externalMessage.getPhoto().get(photoIndex);
         String fileId = telegramPhoto.getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -130,5 +135,11 @@ public class FileServiceImpl implements FileService {
         } catch (IOException e) {
             throw new UploadFileException(urlObj.toExternalForm(), e);
         }
+    }
+
+    @Override
+    public String generateLink(Long id, LinkType linkType) {
+        String hash = cryptoUtils.hashOf(id);
+        return "http://" + linkAddress + "/" + linkType + "?id=" + hash;
     }
 }
