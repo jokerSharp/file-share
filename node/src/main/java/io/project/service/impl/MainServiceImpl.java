@@ -2,10 +2,7 @@ package io.project.service.impl;
 
 import io.project.dao.AppUserDAO;
 import io.project.dao.RawDataDAO;
-import io.project.entity.AppDocument;
-import io.project.entity.AppUser;
-import io.project.entity.RawData;
-import io.project.entity.UserState;
+import io.project.entity.*;
 import io.project.exeption.UploadFileException;
 import io.project.service.FileService;
 import io.project.service.MainService;
@@ -89,9 +86,16 @@ public class MainServiceImpl implements MainService {
             return;
         }
 
-        //todo implement
-        String output = "Photo was successfully processed. Url for downloading: http://test.com/get-photo/123";
-        sendAnswer(output, chatId);
+        try {
+            AppPhoto photo = fileService.processPhoto(update.getMessage());
+            //todo implement
+            String output = "Photo is successfully processed. Url for downloading: http://test.com/get-doc/123";
+            sendAnswer(output, chatId);
+        } catch (UploadFileException e) {
+            log.error(e.getMessage());
+            String error = "Unfortunately, there was an error processing the photo. Please try again later";
+            sendAnswer(error, chatId);
+        }
     }
 
     private boolean isNotAllowedToSendContent(long chatId, AppUser appUser) {
@@ -114,11 +118,11 @@ public class MainServiceImpl implements MainService {
     }
 
     private String processServiceCommand(AppUser appUser, String command) {
-        if (REGISTRATION.equals(command)) {
+        if (REGISTRATION.equals(ServiceCommand.fromValue(command))) {
             return "Temporary unavailable";
-        } else if (HELP.equals(command)) {
+        } else if (HELP.equals(ServiceCommand.fromValue(command))) {
             return help();
-        } else if (START.equals(command)) {
+        } else if (START.equals(ServiceCommand.fromValue(command))) {
             return "Welcome! To get the list of available commands type /help";
         } else {
             return "Unknown command! To get the list of available commands type /help";
