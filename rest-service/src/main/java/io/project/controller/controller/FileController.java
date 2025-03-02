@@ -1,4 +1,4 @@
-package io.project.service.conteoller;
+package io.project.controller.controller;
 
 import io.project.entity.AppDocument;
 import io.project.entity.AppPhoto;

@@ -6,6 +6,7 @@ import io.project.entity.*;
 import io.project.exeption.UploadFileException;
 import io.project.service.FileService;
 import io.project.service.MainService;
+import io.project.service.enums.LinkType;
 import io.project.service.enums.ServiceCommand;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -66,8 +67,8 @@ public class MainServiceImpl implements MainService {
 
         try {
             AppDocument document = fileService.processDocument(update.getMessage());
-            //todo implement
-            String output = "Document is successfully processed. Url for downloading: http://test.com/get-doc/123";
+            String link = fileService.generateLink(document.getId(), LinkType.GET_DOC);
+            String output = "Document is successfully processed. Url for downloading: " + link;
             sendAnswer(output, chatId);
         } catch (UploadFileException e) {
             log.error(e.getMessage());
@@ -88,8 +89,8 @@ public class MainServiceImpl implements MainService {
 
         try {
             AppPhoto photo = fileService.processPhoto(update.getMessage());
-            //todo implement
-            String output = "Photo is successfully processed. Url for downloading: http://test.com/get-doc/123";
+            String link = fileService.generateLink(photo.getId(), LinkType.GET_PHOTO);
+            String output = "Photo is successfully processed. Url for downloading: " + link;
             sendAnswer(output, chatId);
         } catch (UploadFileException e) {
             log.error(e.getMessage());
