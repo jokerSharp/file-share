@@ -3,7 +3,8 @@ package io.project.service.impl;
 import io.project.dao.AppUserDAO;
 import io.project.dao.RawDataDAO;
 import io.project.entity.*;
-import io.project.exeption.UploadFileException;
+import io.project.exception.UploadFileException;
+import io.project.service.AppUserService;
 import io.project.service.FileService;
 import io.project.service.MainService;
 import io.project.service.enums.LinkType;
@@ -16,6 +17,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
+
+import java.util.Optional;
 
 import static io.project.entity.UserState.BASIC_STATE;
 import static io.project.entity.UserState.WAIT_FOR_EMAIL_STATE;
@@ -30,6 +33,7 @@ public class MainServiceImpl implements MainService {
     private final ProducerServiceImpl producerServiceImpl;
     private final AppUserDAO appUserDAO;
     private final FileService fileService;
+    private final AppUserService appUserService;
 
     @Override
     public void processTextMessage(Update update) {
@@ -45,7 +49,7 @@ public class MainServiceImpl implements MainService {
         } else if (BASIC_STATE.equals(userState)) {
             output = processServiceCommand(appUser, text);
         } else if (WAIT_FOR_EMAIL_STATE.equals(userState)) {
-            //todo implement after registration
+            output = appUserService.setEmail(appUser, text);
         } else {
             log.error("Unknown state: {}", userState);
             output = "Unknown error, please input /cancel and try again";
@@ -120,7 +124,7 @@ public class MainServiceImpl implements MainService {
 
     private String processServiceCommand(AppUser appUser, String command) {
         if (REGISTRATION.equals(ServiceCommand.fromValue(command))) {
-            return "Temporary unavailable";
+            return appUserService.registerUser(appUser);
         } else if (HELP.equals(ServiceCommand.fromValue(command))) {
             return help();
         } else if (START.equals(ServiceCommand.fromValue(command))) {
@@ -146,20 +150,19 @@ public class MainServiceImpl implements MainService {
     private AppUser findOrSaveAppUser(Update update) {
         Message textMessage = update.getMessage();
         User telegramUser = textMessage.getFrom();
-        AppUser persistentAppUser = appUserDAO.findByTelegramUserId(telegramUser.getId());
-        if (persistentAppUser == null) {
+        Optional<AppUser> optionalAppUser = appUserDAO.findByTelegramUserId(telegramUser.getId());
+        if (optionalAppUser.isEmpty()) {
             AppUser transientAppUser = AppUser.builder()
                     .telegramUserId(telegramUser.getId())
                     .userName(telegramUser.getUserName())
                     .firstName(telegramUser.getFirstName())
                     .lastName(telegramUser.getLastName())
-                    //todo change after registration implementation
-                    .isActive(true)
+                    .isActive(false)
                     .state(BASIC_STATE)
                     .build();
             return appUserDAO.save(transientAppUser);
         }
-        return persistentAppUser;
+        return optionalAppUser.get();
     }
 
     private void saveRawData(Update update) {
