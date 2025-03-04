@@ -1,4 +1,4 @@
-package io.project.exeption;
+package io.project.exception;
 
 public class UploadFileException extends RuntimeException {
 

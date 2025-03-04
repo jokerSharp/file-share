@@ -6,7 +6,7 @@ import io.project.dao.BinaryContentDAO;
 import io.project.entity.AppDocument;
 import io.project.entity.AppPhoto;
 import io.project.entity.BinaryContent;
-import io.project.exeption.UploadFileException;
+import io.project.exception.UploadFileException;
 import io.project.service.FileService;
 import io.project.service.enums.LinkType;
 import io.project.utils.CryptoUtils;

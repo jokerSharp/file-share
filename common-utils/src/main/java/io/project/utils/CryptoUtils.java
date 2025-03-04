@@ -6,7 +6,6 @@ public class CryptoUtils {
 
     private final Hashids hashids;
 
-
     public CryptoUtils(String salt) {
         int minHashLength = 10;
         this.hashids = new Hashids(salt, minHashLength);
