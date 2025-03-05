@@ -4,14 +4,16 @@ import io.project.entity.AppDocument;
 import io.project.entity.AppPhoto;
 import io.project.entity.BinaryContent;
 import io.project.service.FileService;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -22,40 +24,45 @@ public class FileController {
     private final FileService fileService;
 
     @RequestMapping("/doc")
-    public ResponseEntity<?> getDocument(@RequestParam String id) {
+    public void getDocument(@RequestParam String id, HttpServletResponse response) {
         AppDocument appDocument = fileService.getAppDocument(id);
         if (appDocument == null) {
             log.error("File is not found");
-            return ResponseEntity.notFound().build();
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
         }
+        response.setContentType(MediaType.parseMediaType(appDocument.getMimeType()).toString());
+        response.setHeader("Content-Disposition", "attachment; filename=" + appDocument.getFileName());
+        response.setStatus(HttpServletResponse.SC_OK);
+
         BinaryContent binaryContent = appDocument.getBinaryContent();
-        FileSystemResource fsr = fileService.getFileSystemResource(binaryContent);
-        if (binaryContent == null) {
-            log.error("File is not processed");
-            return ResponseEntity.internalServerError().build();
+        try (ServletOutputStream out = response.getOutputStream();) {
+            out.write(binaryContent.getBinaryContent());
+        } catch (IOException e) {
+            log.error(e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(appDocument.getMimeType()))
-                .header("Content-Disposition", "attachment; filename=" + appDocument.getFileName())
-                .body(fsr);
     }
 
     @RequestMapping("/photo")
-    public ResponseEntity<?> getPhoto(@RequestParam String id) {
+    public void getPhoto(@RequestParam String id, HttpServletResponse response) {
         AppPhoto photo = fileService.getAppPhoto(id);
         if (photo == null) {
-            log.error("File is not found");
-            return ResponseEntity.notFound().build();
+            log.error("Photo is not found");
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
         }
+
+        response.setContentType(MediaType.IMAGE_JPEG_VALUE);
+        response.setHeader("Content-Disposition", "attachment;");
+        response.setStatus(HttpServletResponse.SC_OK);
+
         BinaryContent binaryContent = photo.getBinaryContent();
-        FileSystemResource fsr = fileService.getFileSystemResource(binaryContent);
-        if (binaryContent == null) {
-            log.error("File is not processed");
-            return ResponseEntity.internalServerError().build();
+        try (ServletOutputStream out = response.getOutputStream();) {
+            out.write(binaryContent.getBinaryContent());
+        } catch (IOException e) {
+            log.error(e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG)
-                .header("Content-Disposition", "attachment;")
-                .body(fsr);
     }
 }
