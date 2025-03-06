@@ -10,10 +10,9 @@ import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
@@ -22,11 +21,12 @@ import java.util.Optional;
 @Service
 public class AppUserServiceImpl implements AppUserService {
 
-    @Value("${service.mail.uri}")
-    private String serviceMailUri;
+    @Value("${spring.rabbitmq.queues.registration-mail}")
+    private String registrationMailQueue;
 
     private final AppUserDAO appUserDAO;
     private final CryptoUtils cryptoUtils;
+    private final RabbitTemplate rabbitTemplate;
 
     @Override
     public String registerUser(AppUser appUser) {
@@ -55,32 +55,18 @@ public class AppUserServiceImpl implements AppUserService {
             appUserDAO.save(appUser);
 
             String cryptoUserId = cryptoUtils.hashOf(appUser.getId());
-            ResponseEntity<String> response = sendRequestToMailService(cryptoUserId, email);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                String message = "Sending email to %s failed".formatted(email);
-                log.error(message);
-                appUser.setEmail(null);
-                appUserDAO.save(appUser);
-                return message;
-            }
+            sendRequestToMailService(cryptoUserId, email);
             return "You will receive an activation email. Follow the link to finish the registration";
         } else {
             return "This email already is in use. Please type /cancel and choose another email";
         }
     }
 
-    private ResponseEntity<String> sendRequestToMailService(String cryptoUserId, String email) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    private void sendRequestToMailService(String cryptoUserId, String email) {
         MailParams mailParams = MailParams.builder()
                 .id(cryptoUserId)
                 .emailTo(email)
                 .build();
-        HttpEntity<MailParams> request = new HttpEntity<>(mailParams, headers);
-        return restTemplate.exchange(serviceMailUri,
-                HttpMethod.POST,
-                request,
-                String.class);
+        rabbitTemplate.convertAndSend(registrationMailQueue, mailParams);
     }
 }

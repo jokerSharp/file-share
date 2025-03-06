@@ -1,0 +1,12 @@
+server:
+  port: 8086
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/file_share
+    username: <username>
+    password: <password>
+  jpa:
+    generate-ddl: true
+
+salt: <salt>

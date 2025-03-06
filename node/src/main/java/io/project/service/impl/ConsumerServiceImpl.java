@@ -8,8 +8,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static io.project.commonrabbitmq.model.RabbitQueue.*;
-
 @Log4j2
 @RequiredArgsConstructor
 @Service
@@ -17,7 +15,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 
     private final MainService mainService;
 
-    @RabbitListener(queues = TEXT_MESSAGE_UPDATE)
+    @RabbitListener(queues = "${spring.rabbitmq.queues.text-message-update}")
     @Override
     public void consumeTextMessageUpdates(Update update) {
         log.debug("NODE: TEXT message is received");
@@ -25,7 +23,7 @@ public class ConsumerServiceImpl implements ConsumerService {
         mainService.processTextMessage(update);
     }
 
-    @RabbitListener(queues = DOC_MESSAGE_UPDATE)
+    @RabbitListener(queues = "${spring.rabbitmq.queues.doc-message-update}")
     @Override
     public void consumeDocMessageUpdates(Update update) {
         log.debug("NODE: DOC message is received");
@@ -33,7 +31,7 @@ public class ConsumerServiceImpl implements ConsumerService {
         mainService.processDocumentMessage(update);
     }
 
-    @RabbitListener(queues = PHOTO_MESSAGE_UPDATE)
+    @RabbitListener(queues = "${spring.rabbitmq.queues.photo-message-update}")
     @Override
     public void consumePhotoMessageUpdates(Update update) {
         log.debug("NODE: PHOTO message is received");

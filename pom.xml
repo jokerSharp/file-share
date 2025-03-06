@@ -10,7 +10,6 @@
     <packaging>pom</packaging>
     <modules>
         <module>dispatcher</module>
-        <module>common-rabbitmq</module>
         <module>node</module>
         <module>common-jpa</module>
         <module>rest-service</module>
@@ -23,6 +22,10 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <telegram.starter.version>8.2.0</telegram.starter.version>
+        <lombok.servion>1.18.36</lombok.servion>
+        <common-utils.version>1.0-SNAPSHOT</common-utils.version>
+        <common-jpa.version>1.0-SNAPSHOT</common-jpa.version>
+        <postgresql.version>42.7.5</postgresql.version>
     </properties>
 
     <parent>
@@ -35,7 +38,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
