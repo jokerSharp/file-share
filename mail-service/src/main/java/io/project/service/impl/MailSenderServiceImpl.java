@@ -1,7 +1,7 @@
 package io.project.service.impl;
 
 import io.project.dto.MailParams;
-import io.project.service.MailSender;
+import io.project.service.MailSenderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class MailSenderImpl implements MailSender {
+public class MailSenderServiceImpl implements MailSenderService {
 
     @Value("${spring.mail.username}")
     private String emailFrom;

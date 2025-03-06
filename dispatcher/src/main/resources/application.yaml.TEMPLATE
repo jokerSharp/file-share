@@ -1,0 +1,18 @@
+server:
+  port: 8084
+
+bot:
+  name: <name>
+  token: <token>
+
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: <username>
+    password: <password>
+    queues:
+      text-message-update: text_message_update
+      doc-message-update: doc_message_update
+      photo-message-update: photo_message_update
+      answer-message: answer_message
